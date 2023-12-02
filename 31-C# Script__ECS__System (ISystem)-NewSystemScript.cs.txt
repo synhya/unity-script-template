@@ -1,0 +1,41 @@
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+
+    #ROOTNAMESPACEBEGIN#
+[BurstCompile]
+public partial struct #SCRIPTNAME# : ISystem
+{
+    #region Exposed Fields
+
+    #endregion
+    #region Private Fields
+
+    #endregion
+    #region Exposed Methods
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        #NOTRIM#
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        #NOTRIM#
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+        #NOTRIM#
+    }
+
+    #endregion
+    #region Private Methods
+
+    #endregion
+}
+#ROOTNAMESPACEEND#

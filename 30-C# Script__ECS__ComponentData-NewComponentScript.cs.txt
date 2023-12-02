@@ -1,0 +1,17 @@
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+
+    #ROOTNAMESPACEBEGIN#
+[BurstCompile]
+public struct #SCRIPTNAME# : IComponentData
+{
+    #region Exposed Fields
+
+    #endregion
+    #region Private Fields
+
+    #endregion
+}
+#ROOTNAMESPACEEND#

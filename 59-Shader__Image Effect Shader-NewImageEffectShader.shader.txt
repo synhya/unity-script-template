@@ -1,0 +1,51 @@
+Shader "Hidden/#NAME#"
+{
+    Properties
+    {
+        _MainTex ("Texture", 2D) = "white" {}
+    }
+    SubShader
+    {
+        // No culling or depth
+        Cull Off ZWrite Off ZTest Always
+
+        Pass
+        {
+            HLSLPROGRAM
+            #pragma vertex Vertex
+            #pragma fragment Fragment
+            #include "UnityCG.cginc"
+
+            sampler2D _MainTex;
+
+			struct Attributes
+			{
+				float4 positionOS : POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			struct Varyings
+			{
+				float4 positionCS : SV_POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+            Varyings Vertex ( Attributes input )
+            {
+                v2f o;
+                o.positionCS = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                return o;
+            }
+
+            half4 Fragment ( Varyings input ) : SV_Target
+            {
+                fixed4 col = tex2D(_MainTex, input.uv);
+                // just invert the colors
+                col.rgb = 1 - col.rgb;
+                return col;
+            }
+            ENDHLSL
+        }
+    }
+}

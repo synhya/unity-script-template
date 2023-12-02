@@ -1,0 +1,31 @@
+﻿using UnityEngine;
+using Unity.Collections;
+using Unity.Jobs;
+
+	#ROOTNAMESPACEBEGIN#
+public struct #SCRIPTNAME# : IJobParallelFor
+{
+	#region Exposed Fields
+
+	[ReadOnly] public float deltaTime;
+	public NativeArray<float> values;
+
+    #endregion
+    #region Private Fields
+
+    #endregion
+    #region Exposed Methods
+
+	public void Execute( int index )
+	{
+		float value = values[index];
+		value += deltaTime;
+		values[index] = value;
+	}
+
+    #endregion
+    #region Private Methods
+
+    #endregion
+}
+#ROOTNAMESPACEEND#

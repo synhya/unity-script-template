@@ -1,0 +1,28 @@
+﻿using UnityEngine;
+using UnityEngine.Jobs;
+using Unity.Collections;
+
+public struct #SCRIPTNAME# : IJobParallelForTransform
+{
+	#region Exposed Fields
+
+	[ReadOnly] public float deltaTime;
+	[ReadOnly] public NativeArray<float> speeds;
+
+    #endregion
+    #region Private Fields
+
+    #endregion
+    #region Exposed Methods
+
+	public void Execute( int index, TransformAccess transform )
+	{
+		// Transform components are populated when the job is scheduled with job.Schedule(transforms).
+		transform.rotation = transform.rotation * Quaternion.AngleAxis(speeds[index] * deltaTime, Vector3.up);
+	}
+
+    #endregion
+    #region Private Methods
+
+    #endregion
+}

@@ -1,0 +1,11 @@
+using System;
+
+    #ROOTNAMESPACEBEGIN#
+public interface #SCRIPTNAME#
+{
+    #region Public Methods
+
+    #endregion
+}
+
+#ROOTNAMESPACEEND#

@@ -1,0 +1,135 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+public class #SCRIPTNAME#Feature : ScriptableRendererFeature
+{
+    #region Exposed Fields
+
+    [System.Serializable]
+    public struct PassSettings
+    {
+        [Range(0.0f, 1.0f)]  public float Intensity;
+
+        public RenderPassEvent RenderPassEvent;
+    }
+    
+    // settings
+    public PassSettings PassSettings = new PassSettings();
+
+    #endregion
+    #region Private Fields
+
+    private Material material;
+    private #SCRIPTNAME#Pass renderPass;
+
+    #endregion
+    #region Exposed Methods
+    
+    public override void Create()
+    {
+        material = CoreUtils.CreateEngineMaterial("Hidden/#SCRIPTNAME#");
+        renderPass = new #SCRIPTNAME#Pass(material);
+    }
+
+    // PRECULL -> ADD -> SETUP
+    public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
+    {
+
+    }
+    
+    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+    {
+        if (renderingData.cameraData.cameraType == CameraType.Game)
+        {
+            renderer.EnqueuePass(renderPass);
+        }
+    }
+
+    public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+    {
+        if (renderingData.cameraData.cameraType == CameraType.Game)
+        {
+            // enusures that the opaque texture is avaliable to the Render Pass.
+            renderPass.ConfigureInput(ScriptableRenderPassInput.Color);
+            renderPass.SetTarget(renderer.cameraColorTargetHandle, PassSettings);
+        }
+    }
+    
+    protected override void Dispose(bool disposing)
+    {
+        renderPass.Dispose();
+    }
+
+    #endregion
+
+    class #SCRIPTNAME#Pass : ScriptableRenderPass
+    {
+        #region Private Fields
+
+        private Material material;
+        private RTHandle cameraColorTarget;
+        private PassSettings passSettings;
+        private float intensity;
+
+        #endregion
+        #region Exposed Methods
+        
+        public #SCRIPTNAME#Pass(Material material)
+        {
+            material = material;
+        }
+        
+        public void SetTarget(RTHandle colorHandle, PassSettings passSettings)
+        {
+            cameraColorTarget = colorHandle;
+            intensity = passSettings.Intensity;
+            renderPassEvent = passSettings.RenderPassEvent;
+        }
+
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+        {
+            ConfigureTarget(cameraColorTarget);
+        }
+
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        {
+            var cameraData = renderingData.cameraData;
+            if(cameraData.camera.cameraType != CameraType.Game) return;
+
+            CommandBuffer cmd = CommandBufferPool.Get();
+
+            material.SetFloat("_Intensity", intensity);
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("#SCRIPTNAME#Pass")))
+            {
+
+//                RenderingUtils.ReAllocateIfNeeded(ref _downSamples[i], Vector2.one * scaleFactor, _sourceDescriptor,
+//                            FilterMode.Bilinear, TextureWrapMode.Clamp);
+
+            }
+
+            context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+            
+            CommandBufferPool.Release(cmd);
+        }
+
+        public override void OnCameraCleanup(CommandBuffer cmd)
+        {
+
+        }
+
+        public void Dispose()
+        {
+            CoreUtils.Destroy(material);
+        }
+
+        #endregion
+        #region Private Methods
+
+        #endregion
+    }
+}

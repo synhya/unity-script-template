@@ -1,0 +1,174 @@
+Shader "Custom/#NAME#" {
+	Properties {
+		_BlockSize ("Block Size", Range(0.01, 1)) = 0.17
+		_ColorDiff ("Color Contrast", Range(0, 1)) = 0.47
+	}
+	SubShader {
+		Tags {
+			"RenderPipeline"="UniversalPipeline"
+			"RenderType"="Opaque"
+			"Queue"="Geometry"
+			"UniversalMaterialType" = "Lit" "IgnoreProjector" = "True"
+		}
+
+		HLSLINCLUDE
+		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+		CBUFFER_START(UnityPerMaterial)
+		float _BlockSize;
+		float _ColorDiff;
+		CBUFFER_END
+
+		// Structs
+		struct Attributes {
+			float4 positionOS	: POSITION;
+		};
+
+		struct Varyings {
+			float4 positionCS 	: SV_POSITION;
+			float4 positionOS   : TEXCOORD0;
+		};
+
+		// Vertex Shader
+		Varyings UnlitPassVertex(Attributes input) {
+			Varyings output;
+
+			VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+			output.positionCS = positionInputs.positionCS;
+			// Or :
+			//OUT.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+			output.positionOS = input.positionOS;
+			return output;
+		}
+
+		// Fragment Shader
+		half4 UnlitPassFragment(Varyings input) : SV_Target {
+			
+			float3 checker = floor(input.positionOS.xyz / _BlockSize) * 0.5;
+			float color = frac(checker.x + checker.y + checker.z) * _ColorDiff + 0.05f;
+
+			return color;
+		}
+
+		void VoidFragment(Varyings input) {
+			
+		}
+		
+		ENDHLSL 
+
+		Pass {
+			Name "Unlit"
+			//Tags { "LightMode"="SRPDefaultUnlit" } // (is default anyway)
+
+			HLSLPROGRAM
+			#pragma vertex UnlitPassVertex
+			#pragma fragment UnlitPassFragment
+
+			// Material Keywords
+			#pragma shader_feature _ALPHATEST_ON
+			
+			ENDHLSL
+		}
+
+		// UsePass "Universal Render Pipeline/Lit/ShadowCaster"
+		// UsePass "Universal Render Pipeline/Lit/DepthOnly"
+		// Would be nice if we could just use the passes from existing shaders,
+		// However this breaks SRP Batcher compatibility. Instead, we should define them :
+		
+
+		// DepthOnly, used for Camera Depth Texture (if cannot copy depth buffer instead, and the DepthNormals below isn't used)
+		Pass {
+			Name "DepthOnly"
+			Tags { "LightMode"="DepthOnly" }
+
+			ColorMask 0
+			ZWrite On
+			ZTest LEqual
+
+			HLSLPROGRAM
+			#pragma vertex UnlitPassVertex
+			#pragma fragment VoidFragment
+
+			// Material Keywords
+			#pragma shader_feature _ALPHATEST_ON
+			#pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+			// GPU Instancing
+			#pragma multi_compile_instancing
+			//#pragma multi_compile _ DOTS_INSTANCING_ON
+
+			// #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+			// #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+			// #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+
+			// Note if we do any vertex displacement, we'll need to change the vertex function. e.g. :
+			/*
+			#pragma vertex DisplacedDepthOnlyVertex (instead of DepthOnlyVertex above)
+			
+			Varyings DisplacedDepthOnlyVertex(Attributes input) {
+				Varyings output = (Varyings)0;
+				UNITY_SETUP_INSTANCE_ID(input);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+				
+				// Example Displacement
+				input.positionOS += float4(0, _SinTime.y, 0, 0);
+				
+				output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
+				output.positionCS = TransformObjectToHClip(input.position.xyz);
+				return output;
+			}
+			*/
+			
+			ENDHLSL
+		}
+
+		// DepthNormals, used for SSAO & other custom renderer features that request it
+		Pass {
+			Name "DepthNormals"
+			Tags { "LightMode"="DepthNormals" }
+
+			ZWrite On
+			ZTest LEqual
+
+			HLSLPROGRAM
+			#pragma vertex UnlitPassVertex
+			#pragma fragment VoidFragment
+
+			// Material Keywords
+			#pragma shader_feature_local _NORMALMAP
+			#pragma shader_feature _ALPHATEST_ON
+			#pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+			// GPU Instancing
+			#pragma multi_compile_instancing
+			//#pragma multi_compile _ DOTS_INSTANCING_ON
+
+			// #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+			// #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+			// #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+
+			// Note if we do any vertex displacement, we'll need to change the vertex function. e.g. :
+			/*
+			#pragma vertex DisplacedDepthNormalsVertex (instead of DepthNormalsVertex above)
+
+			Varyings DisplacedDepthNormalsVertex(Attributes input) {
+				Varyings output = (Varyings)0;
+				UNITY_SETUP_INSTANCE_ID(input);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+				
+				// Example Displacement
+				input.positionOS += float4(0, _SinTime.y, 0, 0);
+				
+				output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
+				output.positionCS = TransformObjectToHClip(input.position.xyz);
+				VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+				output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
+				return output;
+			}
+			*/
+			
+			ENDHLSL
+		}
+
+	}
+}

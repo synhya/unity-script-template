@@ -1,0 +1,20 @@
+using System;
+
+    #ROOTNAMESPACEBEGIN#
+public class #SCRIPTNAME#
+{
+    #region Exposed Fields
+
+    #endregion
+    #region Private Fields
+
+    #endregion
+    #region Exposed Methods
+
+    #endregion
+    #region Private Methods
+
+    #endregion
+}
+
+#ROOTNAMESPACEEND#

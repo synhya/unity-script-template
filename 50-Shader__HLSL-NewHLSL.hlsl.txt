@@ -1,0 +1,6 @@
+#ifndef	Include_#NAME#
+#define	Include_#NAME#
+
+
+
+#endif
