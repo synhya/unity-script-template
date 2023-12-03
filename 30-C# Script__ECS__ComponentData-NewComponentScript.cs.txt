@@ -7,11 +7,6 @@ using Unity.Mathematics;
 [BurstCompile]
 public struct #SCRIPTNAME# : IComponentData
 {
-    #region Exposed Fields
 
-    #endregion
-    #region Private Fields
-
-    #endregion
 }
 #ROOTNAMESPACEEND#

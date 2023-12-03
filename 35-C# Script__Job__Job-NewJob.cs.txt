@@ -5,28 +5,13 @@ using Unity.Jobs;
 	#ROOTNAMESPACEBEGIN#
 public struct #SCRIPTNAME# : IJob
 {
-	#region Exposed Fields
-
 	[ReadOnly] public float a;
 	[ReadOnly] public float b;
 	[WriteOnly] public NativeArray<float> result;
-
-    #endregion
-    #region Private Fields
-
-    #endregion
-
-	#region Exposed Methods
 
 	public void Execute()
 	{
 		result[0] = a + b;
 	}
-
-    #endregion
-
-	#region Private Methods
-
-    #endregion
 }
 #ROOTNAMESPACEEND#

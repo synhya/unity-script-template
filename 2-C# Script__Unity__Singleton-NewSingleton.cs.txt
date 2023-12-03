@@ -5,23 +5,12 @@ using UnityEngine;
     #ROOTNAMESPACEBEGIN#
 public class #SCRIPTNAME# : MonoBehaviour
 {
-    #region Exposed Fields
-
     public static #SCRIPTNAME# Instance 
     {
         get { return instance ?? (instance = new #SCRIPTNAME#()); }
     }
 
-    #endregion
-    #region Private Fields
-
     private static #SCRIPTNAME# instance = null;
-
-    #endregion
-    #region Exposed Methods
-
-    #endregion
-    #region Private Methods
 
     void Awake() 
     {
@@ -36,7 +25,5 @@ public class #SCRIPTNAME# : MonoBehaviour
             Destroy(this.gameObject);
         }
     }
-
-    #endregion
 } 
 #ROOTNAMESPACEEND#

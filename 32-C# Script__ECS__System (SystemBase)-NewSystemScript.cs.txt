@@ -7,14 +7,6 @@ using Unity.Mathematics;
 [BurstCompile]
 public partial class #SCRIPTNAME# : SystemBase
 {
-    #region Exposed Fields
-
-    #endregion
-    #region Private Fields
-
-    #endregion
-    #region Exposed Methods
-
     [BurstCompile]
     protected override void OnCreate()
     {
@@ -32,10 +24,5 @@ public partial class #SCRIPTNAME# : SystemBase
     {
         #NOTRIM#
     }
-
-    #endregion
-    #region Private Methods
-
-    #endregion
 }
 #ROOTNAMESPACEEND#

@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
     #ROOTNAMESPACEBEGIN#
-[CreateAssetMenu(fileName = "New#SCRIPTNAME#", menuName = "#SCRIPTNAME#")]
-public class #SCRIPTNAME# : ScriptableObject
+public class #SCRIPTNAME# : MonoBehaviour
 {
-
+    
 
 } 
 #ROOTNAMESPACEEND#

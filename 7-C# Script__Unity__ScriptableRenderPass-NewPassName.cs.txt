@@ -6,8 +6,6 @@ using UnityEngine.Rendering.Universal;
 
 public class #SCRIPTNAME#Feature : ScriptableRendererFeature
 {
-    #region Exposed Fields
-
     [System.Serializable]
     public struct PassSettings
     {
@@ -19,14 +17,10 @@ public class #SCRIPTNAME#Feature : ScriptableRendererFeature
     // settings
     public PassSettings PassSettings = new PassSettings();
 
-    #endregion
-    #region Private Fields
 
     private Material material;
     private #SCRIPTNAME#Pass renderPass;
 
-    #endregion
-    #region Exposed Methods
     
     public override void Create()
     {
@@ -63,19 +57,13 @@ public class #SCRIPTNAME#Feature : ScriptableRendererFeature
         renderPass.Dispose();
     }
 
-    #endregion
 
     class #SCRIPTNAME#Pass : ScriptableRenderPass
     {
-        #region Private Fields
-
         private Material material;
         private RTHandle cameraColorTarget;
         private PassSettings passSettings;
         private float intensity;
-
-        #endregion
-        #region Exposed Methods
         
         public #SCRIPTNAME#Pass(Material material)
         {
@@ -126,10 +114,5 @@ public class #SCRIPTNAME#Feature : ScriptableRendererFeature
         {
             CoreUtils.Destroy(material);
         }
-
-        #endregion
-        #region Private Methods
-
-        #endregion
     }
 }

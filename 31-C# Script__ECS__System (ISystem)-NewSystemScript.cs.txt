@@ -7,14 +7,6 @@ using Unity.Mathematics;
 [BurstCompile]
 public partial struct #SCRIPTNAME# : ISystem
 {
-    #region Exposed Fields
-
-    #endregion
-    #region Private Fields
-
-    #endregion
-    #region Exposed Methods
-
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -32,10 +24,5 @@ public partial struct #SCRIPTNAME# : ISystem
     {
         #NOTRIM#
     }
-
-    #endregion
-    #region Private Methods
-
-    #endregion
 }
 #ROOTNAMESPACEEND#
