@@ -1,6 +1,6 @@
-Shader "Custom/#NAME#" {
+Shader "Custom/CheckerOS" {
 	Properties {
-		_BlockSize ("Block Size", Range(0.01, 1)) = 0.17
+		_BlockSize ("Block Size", Range(0.001, 1)) = 0.17
 		_ColorDiff ("Color Contrast", Range(0, 1)) = 0.47
 	}
 	SubShader {
@@ -27,6 +27,7 @@ Shader "Custom/#NAME#" {
 		struct Varyings {
 			float4 positionCS 	: SV_POSITION;
 			float4 positionOS   : TEXCOORD0;
+			float3 scale : TEXCOORD1;
 		};
 
 		// Vertex Shader
@@ -35,16 +36,20 @@ Shader "Custom/#NAME#" {
 
 			VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
 			output.positionCS = positionInputs.positionCS;
-			// Or :
-			//OUT.positionCS = TransformObjectToHClip(input.positionOS.xyz);
 			output.positionOS = input.positionOS;
+			
+			output.scale = float3 (
+				length(unity_ObjectToWorld._m00_m10_m20),
+				length(unity_ObjectToWorld._m01_m11_m21),
+				length(unity_ObjectToWorld._m02_m12_m22)
+			);
+			
 			return output;
 		}
 
 		// Fragment Shader
 		half4 UnlitPassFragment(Varyings input) : SV_Target {
-			
-			float3 checker = floor(input.positionOS.xyz / _BlockSize) * 0.5;
+			float3 checker = floor(input.positionOS.xyz / _BlockSize * input.scale) * 0.5;
 			float color = frac(checker.x + checker.y + checker.z) * _ColorDiff + 0.05f;
 
 			return color;
