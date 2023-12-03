@@ -1,13 +1,4 @@
-// Example Shader for Universal RP
-// Written by @Cyanilux
-// https://www.cyanilux.com/tutorials/urp-shader-code
-
-/*
-Roughly equivalent to the URP/SimpleLit.shader (but Forward path only)
-https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.universal/Shaders/SimpleLit.shader
-*/
-
-Shader "Cyanilux/URPTemplates/SimpleLitShaderExample" {
+Shader "Custom/#NAME#" {
 	Properties {
 		[MainTexture] _BaseMap("Base Map (RGB) Smoothness / Alpha (A)", 2D) = "white" {}
 		[MainColor]   _BaseColor("Base Color", Color) = (1, 1, 1, 1)
@@ -159,23 +150,23 @@ Shader "Cyanilux/URPTemplates/SimpleLitShaderExample" {
 			}
 
 			//  SurfaceData & InputData
-			void InitalizeSurfaceData(Varyings IN, out SurfaceData surfaceData){
+			void InitalizeSurfaceData(Varyings input, out SurfaceData surfaceData){
 				surfaceData = (SurfaceData)0; // avoids "not completely initalized" errors
 
-				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
+				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
 				#ifdef _ALPHATEST_ON
 					// Alpha Clipping
 					clip(baseMap.a - _Cutoff);
 				#endif
 
-				half4 diffuse = baseMap * _BaseColor * IN.color;
+				half4 diffuse = baseMap * _BaseColor * input.color;
 				surfaceData.albedo = diffuse.rgb;
-				surfaceData.normalTS = SampleNormal(IN.uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
-				surfaceData.emission = SampleEmission(IN.uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
+				surfaceData.normalTS = SampleNormal(input.uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
+				surfaceData.emission = SampleEmission(input.uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
 				surfaceData.occlusion = 1.0; // unused
 
-				half4 specular = SampleSpecularSmoothness(IN.uv, diffuse.a, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
+				half4 specular = SampleSpecularSmoothness(input.uv, diffuse.a, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
 				surfaceData.specular = specular.rgb;
 				surfaceData.smoothness = specular.a * _Smoothness;
 			}
@@ -231,72 +222,72 @@ Shader "Cyanilux/URPTemplates/SimpleLitShaderExample" {
 			}
 
 			// Vertex Shader
-			Varyings LitPassVertex(Attributes IN) {
-				Varyings OUT;
+			Varyings LitPassVertex(Attributes input) {
+				Varyings output;
 
-				//UNITY_SETUP_INSTANCE_ID(IN);
-				//UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
-				//UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
+				//UNITY_SETUP_INSTANCE_ID(input);
+				//UNITY_TRANSFER_INSTANCE_ID(input, OoutputT);
+				//UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				VertexPositionInputs positionInputs = GetVertexPositionInputs(IN.positionOS.xyz);
+				VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
 				#ifdef _NORMALMAP
-					VertexNormalInputs normalInputs = GetVertexNormalInputs(IN.normalOS.xyz, IN.tangentOS);
+					VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS.xyz, input.tangentOS);
 				#else
-					VertexNormalInputs normalInputs = GetVertexNormalInputs(IN.normalOS.xyz);
+					VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS.xyz);
 				#endif
 				
 
-				OUT.positionCS = positionInputs.positionCS;
-				OUT.positionWS = positionInputs.positionWS;
+				output.positionCS = positionInputs.positionCS;
+				output.positionWS = positionInputs.positionWS;
 
 				half3 viewDirWS = GetWorldSpaceViewDir(positionInputs.positionWS);
 				half3 vertexLight = VertexLighting(positionInputs.positionWS, normalInputs.normalWS);
 				half fogFactor = ComputeFogFactor(positionInputs.positionCS.z);
 				
 				#ifdef _NORMALMAP
-					OUT.normalWS = half4(normalInputs.normalWS, viewDirWS.x);
-					OUT.tangentWS = half4(normalInputs.tangentWS, viewDirWS.y);
-					OUT.bitangentWS = half4(normalInputs.bitangentWS, viewDirWS.z);
+					output.normalWS = half4(normalInputs.normalWS, viewDirWS.x);
+					output.tangentWS = half4(normalInputs.tangentWS, viewDirWS.y);
+					output.bitangentWS = half4(normalInputs.bitangentWS, viewDirWS.z);
 				#else
-					OUT.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
-					//OUT.viewDirWS = viewDirWS;
+					output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
+					//output.viewDirWS = viewDirWS;
 				#endif
 
-				OUTPUT_LIGHTMAP_UV(IN.lightmapUV, unity_LightmapST, OUT.lightmapUV);
-				OUTPUT_SH(OUT.normalWS.xyz, OUT.vertexSH);
+				OUTPUT_LIGHTMAP_UV(input.lightmapUV, unity_LightmapST, output.lightmapUV);
+				OUTPUT_SH(output.normalWS.xyz, output.vertexSH);
 
 				#ifdef _ADDITIONAL_LIGHTS_VERTEX
-					OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
+					output.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 				#else
-					OUT.fogFactor = fogFactor;
+					output.fogFactor = fogFactor;
 				#endif
 
 				#if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-					OUT.shadowCoord = GetShadowCoord(positionInputs);
+					output.shadowCoord = GetShadowCoord(positionInputs);
 				#endif
 
-				OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
-				OUT.color = IN.color;
-				return OUT;
+				output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+				output.color = input.color;
+				return output;
 			}
 
 			// Fragment Shader
-			half4 LitPassFragment(Varyings IN) : SV_Target {
-				//UNITY_SETUP_INSTANCE_ID(IN);
-				//UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+			half4 LitPassFragment(Varyings input) : SV_Target {
+				//UNITY_SETUP_INSTANCE_ID(input);
+				//UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
 				// Setup SurfaceData
 				SurfaceData surfaceData;
-				InitalizeSurfaceData(IN, surfaceData);
+				InitalizeSurfaceData(input, surfaceData);
 
 				// Setup InputData
 				InputData inputData;
-				InitializeInputData(IN, surfaceData.normalTS, inputData);
+				InitializeInputData(input, surfaceData.normalTS, inputData);
 
 				// Simple Lighting (Lambert & BlinnPhong)
 				//half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData); // v12 only
 				half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData.albedo, half4(surfaceData.specular, 1), 
-				surfaceData.smoothness, surfaceData.emission, surfaceData.alpha);
+				surfaceData.smoothness, surfaceData.emission, surfaceData.alpha, surfaceData.normalTS);
 				// See Lighting.hlsl to see how this is implemented.
 				// https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl
 

@@ -1,7 +1,3 @@
-// Example Shader for Universal RP
-// Written by @Cyanilux
-// https://www.cyanilux.com/tutorials/urp-shader-code
-
 /* 
 This example reacts to Main Directional Light & Ambient/Baked light. 
 Ignores additional lights. 
@@ -9,7 +5,7 @@ Diffuse/Lambert shading model.
 No specular/smoothness/metallic/etc.
 */
 
-Shader "Cyanilux/URPTemplates/DiffuseLitShaderExample" {
+Shader "Custom/#NAME#" {
 	Properties {
 		_BaseMap ("Example Texture", 2D) = "white" {}
 		_BaseColor ("Example Colour", Color) = (0, 0.66, 0.73, 1)
@@ -101,27 +97,27 @@ Shader "Cyanilux/URPTemplates/DiffuseLitShaderExample" {
 			SAMPLER(sampler_BaseMap);
 
 			// Vertex Shader
-			Varyings LitPassVertex(Attributes IN) {
-				Varyings OUT;
+			Varyings LitPassVertex(Attributes input) {
+				Varyings output;
 
-				VertexPositionInputs positionInputs = GetVertexPositionInputs(IN.positionOS.xyz);
-				OUT.positionCS = positionInputs.positionCS;
-				OUT.positionWS = positionInputs.positionWS;
+				VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+				output.positionCS = positionInputs.positionCS;
+				output.positionWS = positionInputs.positionWS;
 
-				VertexNormalInputs normalInputs = GetVertexNormalInputs(IN.normalOS.xyz);
-				OUT.normalWS = normalInputs.normalWS;
+				VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS.xyz);
+				output.normalWS = normalInputs.normalWS;
 
-				OUTPUT_LIGHTMAP_UV(IN.lightmapUV, unity_LightmapST, OUT.lightmapUV);
-				OUTPUT_SH(OUT.normalWS.xyz, OUT.vertexSH);
+				OUTPUT_LIGHTMAP_UV(input.lightmapUV, unity_LightmapST, output.lightmapUV);
+				OUTPUT_SH(output.normalWS.xyz, OoutputUT.vertexSH);
 
-				OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
-				OUT.color = IN.color;
-				return OUT;
+				output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+				output.color = input.color;
+				return output;
 			}
 
 			// Fragment Shader
-			half4 LitPassFragment(Varyings IN) : SV_Target {
-				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
+			half4 LitPassFragment(Varyings input) : SV_Target {
+				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
 				#ifdef _ALPHATEST_ON
 					// Alpha Clipping
@@ -129,19 +125,19 @@ Shader "Cyanilux/URPTemplates/DiffuseLitShaderExample" {
 				#endif
 
 				// Get Baked GI
-				half3 bakedGI = SAMPLE_GI(IN.lightmapUV, IN.vertexSH, IN.normalWS);
+				half3 bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, input.normalWS);
 				
 				// Main Light & Shadows
-				float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS.xyz);
+				float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS.xyz);
 				Light mainLight = GetMainLight(shadowCoord);
 				half3 attenuatedLightColor = mainLight.color * (mainLight.distanceAttenuation * mainLight.shadowAttenuation);
 
 				// Mix Realtime & Baked (if LIGHTMAP_SHADOW_MIXING / _MIXED_LIGHTING_SUBTRACTIVE is enabled)
-				MixRealtimeAndBakedGI(mainLight, IN.normalWS, bakedGI);
+				MixRealtimeAndBakedGI(mainLight, input.normalWS, bakedGI);
 
 				// Diffuse
 				half3 shading = bakedGI + LightingLambert(attenuatedLightColor, mainLight.direction, IN.normalWS);
-				half4 color = baseMap * _BaseColor * IN.color;
+				half4 color = baseMap * _BaseColor * input.color;
 				return half4(color.rgb * shading, color.a);
 			}
 			ENDHLSL

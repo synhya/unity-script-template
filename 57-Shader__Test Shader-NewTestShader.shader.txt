@@ -1,7 +1,9 @@
-Shader "Custom/CheckerOS" {
+Shader "Custom/#NAME#" {
 	Properties {
 		_BlockSize ("Block Size", Range(0.001, 1)) = 0.17
+		_ColorBase ("Base Color", Range(0,1)) = 0.05
 		_ColorDiff ("Color Contrast", Range(0, 1)) = 0.47
+		_ShadowStrength ("Shadow Strength", Range(0,1)) = 0.5
 	}
 	SubShader {
 		Tags {
@@ -13,25 +15,35 @@ Shader "Custom/CheckerOS" {
 
 		HLSLINCLUDE
 		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
 		CBUFFER_START(UnityPerMaterial)
+		float4 _BaseMap_ST;
+		float4 _BaseColor;
 		float _BlockSize;
 		float _ColorDiff;
+		float _ColorBase;
+		float _ShadowStrength;
 		CBUFFER_END
 
+
+			
 		// Structs
 		struct Attributes {
 			float4 positionOS	: POSITION;
+			float3 normalOS : NORMAL;
 		};
 
 		struct Varyings {
 			float4 positionCS 	: SV_POSITION;
 			float4 positionOS   : TEXCOORD0;
-			float3 scale : TEXCOORD1;
+			float3 positionWS : TEXCOORD1;
+			float3 scale : TEXCOORD2;
 		};
 
 		// Vertex Shader
-		Varyings UnlitPassVertex(Attributes input) {
+		Varyings LitPassVertex(Attributes input) {
 			Varyings output;
 
 			VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
@@ -43,34 +55,54 @@ Shader "Custom/CheckerOS" {
 				length(unity_ObjectToWorld._m01_m11_m21),
 				length(unity_ObjectToWorld._m02_m12_m22)
 			);
+			output.positionWS = positionInputs.positionWS;
 			
 			return output;
 		}
 
 		// Fragment Shader
-		half4 UnlitPassFragment(Varyings input) : SV_Target {
+		half4 LitPassFragment(Varyings input) : SV_Target {
 			float3 checker = floor(input.positionOS.xyz / _BlockSize * input.scale) * 0.5;
-			float color = frac(checker.x + checker.y + checker.z) * _ColorDiff + 0.05f;
+			float color = frac(checker.x + checker.y + checker.z) * _ColorDiff + _ColorBase;
 
-			return color;
+			float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+			Light light = GetMainLight(shadowCoord);
+			
+			float shadowColor = lerp((1.0 - _ShadowStrength), 1.0, light.shadowAttenuation);
+			
+			return color * shadowColor;
 		}
 
-		void VoidFragment(Varyings input) {
-			
+		half4 EmptyFragment(Varyings input) : SV_Target {
+			return 0;
 		}
 		
 		ENDHLSL 
 
 		Pass {
-			Name "Unlit"
-			//Tags { "LightMode"="SRPDefaultUnlit" } // (is default anyway)
+			Name "Checker"
+			Tags { "LightMode"="UniversalForward" }
 
 			HLSLPROGRAM
-			#pragma vertex UnlitPassVertex
-			#pragma fragment UnlitPassFragment
-
+			#pragma vertex LitPassVertex
+			#pragma fragment LitPassFragment
+			
 			// Material Keywords
 			#pragma shader_feature _ALPHATEST_ON
+
+			// URP Keywords
+			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+			// Note, v11 changes this to :
+			// #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+
+			#pragma multi_compile _ _SHADOWS_SOFT
+			#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+			#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+			#pragma multi_compile _ LIGHTMAP_SHADOW_MIXING // v10+ only, renamed from "_MIXED_LIGHTING_SUBTRACTIVE"
+			#pragma multi_compile _ SHADOWS_SHADOWMASK // v10+ only
+
+			
 			
 			ENDHLSL
 		}
@@ -79,6 +111,20 @@ Shader "Custom/CheckerOS" {
 		// UsePass "Universal Render Pipeline/Lit/DepthOnly"
 		// Would be nice if we could just use the passes from existing shaders,
 		// However this breaks SRP Batcher compatibility. Instead, we should define them :
+
+		Pass {
+			Name "ShadowCaster"
+			Tags { "LightMode"="ShadowCaster" }
+
+			ZWrite On
+			ZTest LEqual
+
+			HLSLPROGRAM
+			#pragma vertex LitPassVertex
+			#pragma fragment EmptyFragment
+
+			ENDHLSL
+		}
 		
 
 		// DepthOnly, used for Camera Depth Texture (if cannot copy depth buffer instead, and the DepthNormals below isn't used)
@@ -91,38 +137,8 @@ Shader "Custom/CheckerOS" {
 			ZTest LEqual
 
 			HLSLPROGRAM
-			#pragma vertex UnlitPassVertex
-			#pragma fragment VoidFragment
-
-			// Material Keywords
-			#pragma shader_feature _ALPHATEST_ON
-			#pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-			// GPU Instancing
-			#pragma multi_compile_instancing
-			//#pragma multi_compile _ DOTS_INSTANCING_ON
-
-			// #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-			// #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-			// #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
-
-			// Note if we do any vertex displacement, we'll need to change the vertex function. e.g. :
-			/*
-			#pragma vertex DisplacedDepthOnlyVertex (instead of DepthOnlyVertex above)
-			
-			Varyings DisplacedDepthOnlyVertex(Attributes input) {
-				Varyings output = (Varyings)0;
-				UNITY_SETUP_INSTANCE_ID(input);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-				
-				// Example Displacement
-				input.positionOS += float4(0, _SinTime.y, 0, 0);
-				
-				output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
-				output.positionCS = TransformObjectToHClip(input.position.xyz);
-				return output;
-			}
-			*/
+			#pragma vertex LitPassVertex
+			#pragma fragment EmptyFragment
 			
 			ENDHLSL
 		}
@@ -136,44 +152,12 @@ Shader "Custom/CheckerOS" {
 			ZTest LEqual
 
 			HLSLPROGRAM
-			#pragma vertex UnlitPassVertex
-			#pragma fragment VoidFragment
-
-			// Material Keywords
-			#pragma shader_feature_local _NORMALMAP
-			#pragma shader_feature _ALPHATEST_ON
-			#pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-			// GPU Instancing
-			#pragma multi_compile_instancing
-			//#pragma multi_compile _ DOTS_INSTANCING_ON
-
-			// #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-			// #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-			// #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
-
-			// Note if we do any vertex displacement, we'll need to change the vertex function. e.g. :
-			/*
-			#pragma vertex DisplacedDepthNormalsVertex (instead of DepthNormalsVertex above)
-
-			Varyings DisplacedDepthNormalsVertex(Attributes input) {
-				Varyings output = (Varyings)0;
-				UNITY_SETUP_INSTANCE_ID(input);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-				
-				// Example Displacement
-				input.positionOS += float4(0, _SinTime.y, 0, 0);
-				
-				output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
-				output.positionCS = TransformObjectToHClip(input.position.xyz);
-				VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
-				output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
-				return output;
-			}
-			*/
+			#pragma vertex LitPassVertex
+			#pragma fragment EmptyFragment
 			
 			ENDHLSL
 		}
 
 	}
+	Fallback "Diffuse" 
 }

@@ -1,8 +1,4 @@
-// Example Shader for Universal RP
-// Written by @Cyanilux
-// https://www.cyanilux.com/tutorials/urp-shader-code
-
-Shader "Cyanilux/URPTemplates/Unlit+ShaderExample" {
+Shader "Custom/#NAME#" {
 	Properties {
 		_BaseMap ("Example Texture", 2D) = "white" {}
 		_BaseColor ("Example Colour", Color) = (0, 0.66, 0.73, 1)
@@ -58,28 +54,28 @@ Shader "Cyanilux/URPTemplates/Unlit+ShaderExample" {
 			SAMPLER(sampler_BaseMap);
 
 			// Vertex Shader
-			Varyings UnlitPassVertex(Attributes IN) {
-				Varyings OUT;
+			Varyings UnlitPassVertex(Attributes input) {
+				Varyings output;
 
-				VertexPositionInputs positionInputs = GetVertexPositionInputs(IN.positionOS.xyz);
-				OUT.positionCS = positionInputs.positionCS;
+				VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+				output.positionCS = positionInputs.positionCS;
 				// Or :
-				//OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
-				OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
-				OUT.color = IN.color;
-				return OUT;
+				//output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+				output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+				output.color = input.color;
+				return output;
 			}
 
 			// Fragment Shader
-			half4 UnlitPassFragment(Varyings IN) : SV_Target {
-				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
+			half4 UnlitPassFragment(Varyings input) : SV_Target {
+				half4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
 
 				#ifdef _ALPHATEST_ON
 					// Alpha Clipping
 					clip(baseMap.a - _Cutoff);
 				#endif
 
-				return baseMap * _BaseColor * IN.color;
+				return baseMap * _BaseColor * input.color;
 			}
 			ENDHLSL
 		}
