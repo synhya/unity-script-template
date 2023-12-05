@@ -31,10 +31,7 @@ public class #SCRIPTNAME# : MonoBehaviour
         argsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
         
         bounds = new Bounds(transform.position, Vector3.one * 100f);
-    }
 
-    private void SetShaderValue() 
-    {
         // instance setting
         instancedBuffer = new ComputeBuffer(instanceCount, SizeOf(typeof(InstanceData)));
         initializeShader.SetBuffer(0, Instances, instancedBuffer);
@@ -53,10 +50,14 @@ public class #SCRIPTNAME# : MonoBehaviour
         instancedMaterial.SetBuffer(InstancedBuffer, instancedBuffer);
     }
 
+
     private void Update()
     {
-        if (!Application.isPlaying)
+        if (!Application.isPlaying) 
+        {
+            OnDisable();
             OnEnable();
+        }
         
         if(instancedMaterial)
             Graphics.DrawMeshInstancedIndirect(instancedMesh, 0, instancedMaterial, bounds, argsBuffer);
@@ -64,8 +65,8 @@ public class #SCRIPTNAME# : MonoBehaviour
 
     private void OnDisable()
     {
-        argsBuffer.Release();
-        instancedBuffer.Release();
-        CoreUtils.Destroy(instancedMaterial);
+        argsBuffer?.Release();
+        instancedBuffer?.Release();
+        if(instancedMaterial) CoreUtils.Destroy(instancedMaterial);
     }
 } 
