@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using static System.Runtime.InteropServices.Marshal;
 
+// [ExecuteInEditMode]
 public class #SCRIPTNAME# : MonoBehaviour
 {
     [SerializeField] private ComputeShader initializeShader;
@@ -25,8 +26,15 @@ public class #SCRIPTNAME# : MonoBehaviour
 
     private void OnEnable()
     {
-        if (!instancedMaterial) instancedMaterial = CoreUtils.CreateEngineMaterial("Hidden/Voxel");
+        if (!instancedMaterial) instancedMaterial = CoreUtils.CreateEngineMaterial("Hidden/#SCRIPTNAME#");
+        starsBuffer = new ComputeBuffer(instanceCount, SizeOf(typeof(InstanceData)));
+        argsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
         
+        bounds = new Bounds(transform.position, Vector3.one * 100f);
+    }
+
+    private void SetShaderValue() 
+    {
         // instance setting
         instancedBuffer = new ComputeBuffer(instanceCount, SizeOf(typeof(InstanceData)));
         initializeShader.SetBuffer(0, Instances, instancedBuffer);
@@ -40,9 +48,8 @@ public class #SCRIPTNAME# : MonoBehaviour
         args[2] = (uint)instancedMesh.GetIndexStart(0);
         args[3] = (uint)instancedMesh.GetBaseVertex(0);
         argsBuffer.SetData(args);
-        
-        bounds = new Bounds(transform.position, Vector3.one * 100f);
-        
+
+        // final shader setting
         instancedMaterial.SetBuffer(InstancedBuffer, instancedBuffer);
     }
 
