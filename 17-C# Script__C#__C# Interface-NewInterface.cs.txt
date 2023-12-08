@@ -1,9 +1,0 @@
-using System;
-
-    #ROOTNAMESPACEBEGIN#
-public interface #SCRIPTNAME#
-{
-
-}
-
-#ROOTNAMESPACEEND#
