@@ -27,8 +27,6 @@ public class #SCRIPTNAME# : MonoBehaviour
     private void OnEnable()
     {
         if (!instancedMaterial) instancedMaterial = CoreUtils.CreateEngineMaterial("Hidden/#SCRIPTNAME#");
-        starsBuffer = new ComputeBuffer(instanceCount, SizeOf(typeof(InstanceData)));
-        argsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
         
         bounds = new Bounds(transform.position, Vector3.one * 100f);
 
