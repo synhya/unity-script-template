@@ -5,25 +5,19 @@ using UnityEngine;
     #ROOTNAMESPACEBEGIN#
 public class #SCRIPTNAME# : MonoBehaviour
 {
-    public static #SCRIPTNAME# Instance 
-    {
-        get { return instance ?? (instance = new #SCRIPTNAME#()); }
-    }
-
+    public static #SCRIPTNAME# Instance =>
+        (instance ??= (new GameObject("Manager")).AddComponent<#SCRIPTNAME#>());
     private static #SCRIPTNAME# instance = null;
 
     void Awake() 
     {
-        if (instance == null)
+        if (instance != this)
         {
-            instance = this;
-
-            DontDestroyOnLoad(this.gameObject);
+            if (instance == null) instance = this;
+            else Destroy(this);
         }
-        else
-        {
-            Destroy(this.gameObject);
-        }
+        
+        DontDestroyOnLoad(this);
     }
 } 
 #ROOTNAMESPACEEND#
