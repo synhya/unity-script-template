@@ -9,9 +9,6 @@ Shader "Hidden/#NAME#"
         LOD 100
 
         HLSLINCLUDE
-        #pragma vertex vert
-        #pragma fragment frag
-
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
